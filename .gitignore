@@ -1,0 +1,15 @@
+cat > .gitignore <<'EOF'
+# macOS
+.DS_Store
+
+# Verilator build artifacts
+obj_dir/
+
+# Simulation outputs
+sim/*.vcd
+coverage.dat
+coverage_report/
+
+# Temporary/editor files
+*.save
+EOF
