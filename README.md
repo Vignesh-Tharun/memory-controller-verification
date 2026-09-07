@@ -4,7 +4,7 @@
 
 This project implements a SystemVerilog/UVM-based verification environment for a simplified synchronous memory controller.
 
-The project was built to practice verification concepts relevant to digital IP and DDR/PHY verification environments, including:
+The project was built as a self-directed effort to develop verification concepts relevant to digital IP and DDR/PHY verification environments, including:
 
 - UVM testbench architecture
 - Directed and constrained-random testing
