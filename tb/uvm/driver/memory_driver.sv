@@ -26,56 +26,67 @@ class memory_driver extends uvm_driver #(memory_transaction);
         memory_transaction tr;
 
         // Wait until reset released before driving transactions
-        // the DUT is held in reset from 0–10 ns, then reset is released.
+        // the DUT is held in reset from 0–10 ns, then reset is released at 10ns.
         @(negedge vif.rst);
 
         // forever begin because we want to keep waiting for transaction and drive them whenever they arrive
         forever begin
-            // Wait for next transaction from sequencer
-            // seq_item_port inherited variable
-            // seq_item_port is the communication between driver and sequencer to receive sequence items
-            seq_item_port.get_next_item(tr);
+            // NEW driver logic: send a request EVERY clock cycle
+            @(vif.driver_cb);
 
-            vif.write = tr.write;
-            vif.addr = tr.addr;
-            vif.wdata = tr.wdata;
-            vif.valid = 1;
+            seq_item_port.try_next_item(tr);
 
-            // Give DUT time to see the driven signals before clock edge
-            #1;
+            if (tr != null) begin
+                // Drive it and immediately mark it done
+                // Monitor's and scoreboard's problem to see for completion
+                vif.driver_cb.write <= tr.write;
+                vif.driver_cb.addr  <= tr.addr;
+                vif.driver_cb.wdata <= tr.wdata;
+                vif.driver_cb.valid <= 1;
+                seq_item_port.item_done();
+            end
+            else begin
+                // If nothing is ready, drive an empty cycle
+                vif.driver_cb.valid <= 0;
+            end
 
-            // Wait for this transaction to be captured
-            @(posedge vif.clk);
+            // OLD driver logic: sends a request and always wait for 3 cycles
 
-            // Keep valid asserted for this complete clock cycle then deassert after edge
-            #1;
+            // // Wait for next transaction from sequencer
+            // // seq_item_port inherited variable
+            // // seq_item_port is the communication between driver and sequencer to receive sequence items
+            // seq_item_port.get_next_item(tr);
 
-            // Don't present the request anymore
-            vif.valid = 0;
+            // // Wait for a posedge clk
+            // @(vif.driver_cb);
 
-            // Wait for DUT to complete the request
-            @(posedge vif.clk); 
+            // vif.driver_cb.write <= tr.write;
+            // vif.driver_cb.addr <= tr.addr;
+            // vif.driver_cb.wdata <= tr.wdata;
+            // vif.driver_cb.valid <= 1;
 
-            // Tell sequencer done with this transaction
-            seq_item_port.item_done();
+            // // Wait for the next posedge clk
+            // // The request has now been presented for the DUT to sample.
+            // @(vif.driver_cb);
+
+            // // Don't present the request anymore
+            // vif.driver_cb.valid <= 0;
+
+            // // Wait for DUT to complete the request
+            // @(vif.driver_cb); 
+
+            // // Tell sequencer done with this transaction
+            // seq_item_port.item_done();
         end
     endtask
 
-    // Drive with a memory transaction
-    // task drive(memory_transaction tr);
-    //     // Put the transaction into the DUT's inputs
-    //     vif.write = tr.write;
-    //     vif.addr = tr.addr;
-    //     vif.wdata = tr.wdata;
-    //     vif.valid = 1;
-
-    //     // Wait for this transaction to be captured
-    //     @(posedge vif.clk);
-
-    //     // Don't present the request anymore
-    //     vif.valid = 0;
-
-    //     // Wait for DUR to complete the request
-    //     @(posedge vif.clk); 
-    // endtask
+    // Drain the pipeline before ending the test.
+    // seq.start() returns the cycle item_done() fires for the LAST item —
+    // that's when the driver PRESENTS it, not when the DUT actually finishes it.
+    // Chain: 1 cycle for the DUT to even see that valid (clocking block
+    // drive delay) + 2 cycles for the DUT to complete it which means 3 cycles minimum.
+    // Using 4 for one additional cycle of margin.
+    task wait_idle(int cycles = 4);
+        repeat (cycles) @(vif.driver_cb);
+    endtask
 endclass

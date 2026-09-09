@@ -6,10 +6,13 @@ module memory_coverage (
 );
 
 // List of stuff to keep track of
-covergroup memory_cg @(posedge clk);
+// Coverage group samples only for valid transactions
+// I don't want cycles where valid = 0 and garbage write/addr values
+// be counted in my coverage bins
+covergroup memory_cg @(posedge clk iff valid);
 
     // Keep track of a particular signal and what values it take
-    // operation is the name given to coverpoint
+    // operation is the NAME given to coverpoint
     operation: coverpoint write {
         // We create bins to check if we have hit both buckets/ covered both operations during testing
         // bins define specific ranges I want to track for functional coverage

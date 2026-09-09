@@ -14,6 +14,11 @@ class memory_test extends uvm_test;
         env = memory_env::type_id::create("env", this);
     endfunction
 
+    // 1. Sequence calls finish_item(tr) for the LAST item → blocks, waiting
+    // 2. Driver's turn comes on the clock: drives it, calls item_done()
+    // 3. The moment item_done() fires → finish_item() unblocks
+    // 4. sequence's body() task has nothing left to do → it ends
+    // 5. seq.start() (which was just waiting for body() to finish) returns
     task run_phase(uvm_phase phase);
         memory_sequence seq;
 
@@ -27,7 +32,8 @@ class memory_test extends uvm_test;
         // Start sequence WITH the sequencer
         seq.start(env.agent.sequencer);
 
-        #10;
+        // Drain the pipeline before ending the test.
+        env.agent.driver.wait_idle();
 
         // End run phase when everyone else is done
         phase.drop_objection(this);

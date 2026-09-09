@@ -3,6 +3,7 @@
 `include "assertions/memory_assertions.sv"
 `include "tb/interface/memory_if.sv"
 
+// First thing to put since all other UVM classes use this
 `include "tb/uvm/transaction/memory_transaction.sv"
 
 `include "tb/uvm/sequence/memory_sequence.sv"
@@ -58,7 +59,7 @@ module tb_top;
     // Memory assertions
     // DOES NOT drive any inputs, just watches them
     memory_assertions assertions (
-        .clk(clk),
+        .clk(intf.clk),
         .rst(intf.rst),
         .valid(intf.valid),
         .ready(intf.ready)
@@ -121,6 +122,7 @@ module tb_top;
         intf.addr = 0;
         intf.wdata = 0;
 
+        // Wait for 1 clock period and deassert reset
         #10;
 
         intf.rst = 0;

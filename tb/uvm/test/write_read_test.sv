@@ -29,7 +29,8 @@ class write_read_test extends uvm_test;
 
         seq.start(env.agent.sequencer);
 
-        #10;
+        // Drain the pipeline before ending the test.
+        env.agent.driver.wait_idle();
 
         phase.drop_objection(this);
 

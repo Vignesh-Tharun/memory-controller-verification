@@ -10,9 +10,6 @@ class reset_sequence extends uvm_sequence #(memory_transaction);
 
         memory_transaction tr;
 
-        // Wait until reset has been released.
-        #1;
-
         // Perform a transaction after reset
         tr = memory_transaction::type_id::create("post_reset_write");
 

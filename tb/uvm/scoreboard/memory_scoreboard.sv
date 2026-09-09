@@ -1,21 +1,25 @@
 class memory_scoreboard extends uvm_scoreboard;
     `uvm_component_utils(memory_scoreboard)
 
-    uvm_analysis_imp #(memory_transaction, memory_scoreboard) analysis_export;
+    uvm_analysis_imp #(memory_transaction, memory_scoreboard) analysis_imp;
 
     logic [31:0] expected_memory [0:255];
 
     function new(string name = "memory_scoreboard",
                  uvm_component parent = null);
         super.new(name, parent);
-        analysis_export = new("analysis_export", this);
+
+        // uvm_analysis_imp holds reference to my scoreboard here through "this"
+        analysis_imp = new("analysis_imp", this);
+
+        // Initialise all 256 locations with 0 in expected memory
         for (int i = 0; i < 256; i++)
             expected_memory[i] = 0;
 
     endfunction
 
+    // uvm_analysis_imp calls this write function since it holds a reference to my scoreboard class
     function void write(memory_transaction tr);
-
         // WRITE
         if (tr.write) begin
             expected_memory[tr.addr] = tr.wdata;
@@ -27,20 +31,22 @@ class memory_scoreboard extends uvm_scoreboard;
                     tr.addr,
                     tr.wdata
                 ),
-                UVM_MEDIUM
+                UVM_MEDIUM // Verbosity
             )
 
         end
 
         // READ
         else begin
-            if (expected_memory[tr.addr] === tr.wdata) begin
+            // We use === instead of == for exact 4 state comparison thus X/Z
+            // should also be detected unlike == logical equality
+            if (expected_memory[tr.addr] === tr.rdata) begin
                 `uvm_info(
                     "SCOREBOARD",
                     $sformatf(
                         "READ PASS addr=%0d data=%h",
                         tr.addr,
-                        tr.wdata
+                        tr.rdata
                     ),
                     UVM_MEDIUM
                 )
@@ -53,7 +59,7 @@ class memory_scoreboard extends uvm_scoreboard;
                         "READ FAIL addr=%0d expected=%h actual=%h",
                         tr.addr,
                         expected_memory[tr.addr],
-                        tr.wdata
+                        tr.rdata
                     )
                 )
             end

@@ -15,7 +15,7 @@ tests = [
 ]
 
 # .. go back one level
-executable = "../../../obj_dir/Vtb_top"
+executable = "./obj_dir/Vtb_top"
 
 print("My UVM Regression")
 

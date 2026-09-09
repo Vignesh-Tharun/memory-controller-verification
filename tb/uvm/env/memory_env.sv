@@ -20,7 +20,7 @@ class memory_env extends uvm_env;
         super.connect_phase(phase);
 
         agent.monitor.analysis_port.connect(
-            scoreboard.analysis_export
+            scoreboard.analysis_imp
         );
     endfunction
 

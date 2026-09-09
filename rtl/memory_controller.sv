@@ -25,6 +25,12 @@ module memory_controller(
 // 32 bit words and 256 of them
 logic [31:0] memory [0:255];
 
+// Begin all memory locations with 0
+initial begin
+    for (int i = 0; i < 256; i++)
+        memory[i] = 32'h0;
+end
+
 /* 
 IMPT Note: Added pending related variables to make DUT behave like a realistic
 synchronous interface. It stores incoming request and takes one clock cycle
@@ -54,6 +60,34 @@ always_ff @(posedge clk) begin
     end
 
     else begin
+        $display("@%0t DUT: valid=%0b write=%0b addr=%0d wdata=%h pending=%0b pending_write=%0b pending_addr=%0d pending_wdata=%h memory10=%h rdata=%h ready=%0b",
+
+        $time,
+
+        valid,
+
+        write,
+
+        addr,
+
+        wdata,
+
+        pending,
+
+        pending_write,
+
+        pending_addr,
+
+        pending_wdata,
+
+        memory[10],
+
+        rdata,
+
+        ready
+
+    );
+
         ready <= 0;
 
         // input are ready to be processed
@@ -75,6 +109,7 @@ always_ff @(posedge clk) begin
         // CYCLE 1: Request A
         // CYCLE 2: Request B, Request A complete
         // CYCLE 3: Request C, Request B complete
+        // Store current valid to pending
         pending <= valid;
 
         if (valid) begin
