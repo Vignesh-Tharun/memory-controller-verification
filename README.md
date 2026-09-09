@@ -14,7 +14,7 @@ The project was built as a self-directed effort to develop verification concepts
 - Regression automation
 - Simulation debugging and waveform analysis
 
-The DUT is intentionally a simplified memory controller rather than a full DDR PHY. The focus is on demonstrating a structured verification methodology and reusable verification components.
+The DUT is intentionally implemented as a simplified, single-stage pipelined memory controller with **one-cycle request latency** rather than a full DDR PHY. The design supports **back-to-back request acceptance on consecutive clock cycles**. The focus of the project is on demonstrating a structured verification methodology, reusable UVM verification components, functional coverage, assertions, and transaction-level checking.
 
 ## DUT
 
