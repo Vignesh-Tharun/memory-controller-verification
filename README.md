@@ -223,7 +223,8 @@ memory-controller-verification/
 │   └── memory_coverage.sv
 ├── sim/
 ├── docs/
-│   └── architecture.md
+│   ├── architecture.md
+│   └── waveform_pipelined_memory_test.png
 ├── README.md
 └── .gitignore
 ```
