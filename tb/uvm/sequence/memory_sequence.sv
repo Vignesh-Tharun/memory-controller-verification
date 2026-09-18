@@ -36,8 +36,13 @@ class memory_sequence extends uvm_sequence #(memory_transaction);
             if ((tr.randomize() with {
                 write == 0;
                 addr == written_addresses[i];
+                // I do not want rand wdata to be in my waveform after the first
+                // 10 write transactions. This is happening because
+                // wdata is being randomized even for READ transactions
+                // causing garbage values for wdata in those READ transactions
+                wdata == 32'hDEADBEEF; 
             }) == 0)    
-                `uvm_fatal("RANDFAIL", "Write transaction randomization failed")
+                `uvm_fatal("RANDFAIL", "Read transaction randomization failed")
             finish_item(tr);
         end
     endtask

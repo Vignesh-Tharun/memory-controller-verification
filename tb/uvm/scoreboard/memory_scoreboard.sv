@@ -33,7 +33,6 @@ class memory_scoreboard extends uvm_scoreboard;
                 ),
                 UVM_MEDIUM // Verbosity
             )
-
         end
 
         // READ

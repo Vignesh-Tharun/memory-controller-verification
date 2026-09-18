@@ -2,7 +2,7 @@
 // A monitor is actually an observer of the interface protocol
 // Monitor here handles BOTH request and completion side
 // Request side: Capture valid transactions recently issued and store in FIFO
-// Completion side: Ready ready transactions completed and print it out
+// Completion side: Ready transactions completed and print it out
 class memory_monitor extends uvm_monitor;
     `uvm_component_utils(memory_monitor)
 
@@ -28,13 +28,15 @@ class memory_monitor extends uvm_monitor;
     task run_phase(uvm_phase phase);
         // $ means unbounded queue whose size can grow and shrink dynamically
         /*
-            A FIFO queue is used here since DUT is single stage so assumption is DUT 
-            completes request in issue order with no reordering.
-            If it is a much more complex DUT, a later issued transaction can
-            complete earlier than an earlier issue transaction. Thus, an
-            associative array (hashmap) would be more suitable 
-            where each transaction has an associated ID to know which 
-            completed first
+            A FIFO queue is used here because this DUT gives every request the
+            same fixed latency and has no reordering paths — so whichever
+            transaction has been waiting longest is guaranteed to be the one
+            that just completed.
+            A DUT with variable per-request latency (e.g. a cache hit finishing
+            before an earlier-issued miss) could complete requests out of issue
+            order, and would need an associative array keyed by a transaction ID
+            instead, so each completion is matched to the correct outstanding
+            request regardless of arrival order.
         */
         memory_transaction inflight_q[$]; 
         memory_transaction tr;
@@ -42,6 +44,15 @@ class memory_monitor extends uvm_monitor;
         forever begin
             // wait for clock edge
             @(vif.monitor_cb);
+
+            /*
+                Note: I did not write the valid transaction to the analysis port
+                and just the completed ready transactions as the scoreboard 
+                needs one complete transaction object — address, write/read, 
+                and (for reads) the result — in a single shot. Reporting at 
+                valid time would hand the scoreboard a transaction with rdata 
+                still unset, and it'd immediately do a garbage compare.
+            */
 
             // If new request showed up THIS cycle
             if (vif.monitor_cb.valid) begin

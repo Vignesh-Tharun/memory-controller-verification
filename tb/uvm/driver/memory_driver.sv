@@ -31,7 +31,8 @@ class memory_driver extends uvm_driver #(memory_transaction);
 
         // forever begin because we want to keep waiting for transaction and drive them whenever they arrive
         forever begin
-            // NEW driver logic: send a request EVERY clock cycle
+            // NEW driver logic: send a request EVERY clock cycle and drive inputs of DUT
+            // At the next clock, only then will DUT will actual sample the inputs
             @(vif.driver_cb);
 
             seq_item_port.try_next_item(tr);

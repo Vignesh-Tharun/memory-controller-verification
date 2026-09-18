@@ -1,4 +1,4 @@
-// Interface is like a bundle of wires that connect testbench to DUT\
+// Interface is like a bundle of wires that connect testbench to DUT
 // Usually clk is provided externally to avoid coupling
 interface memory_if(input logic clk);
     logic rst;
@@ -10,6 +10,9 @@ interface memory_if(input logic clk);
     logic [31:0] rdata;
     logic ready;
 
+    // A clocking block acts like a timing contract between your testbench 
+    // and DUT
+    
     // Eliminates race conditions between DUT and testbench
     // A clocking block controls when the testbench drives DUT inputs 
     // and when the testbench samples DUT outputs, 

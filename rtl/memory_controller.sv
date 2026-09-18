@@ -61,32 +61,34 @@ always_ff @(posedge clk) begin
 
     else begin
         $display("@%0t DUT: valid=%0b write=%0b addr=%0d wdata=%h pending=%0b pending_write=%0b pending_addr=%0d pending_wdata=%h memory10=%h rdata=%h ready=%0b",
-
-        $time,
-
-        valid,
-
-        write,
-
-        addr,
-
-        wdata,
-
-        pending,
-
-        pending_write,
-
-        pending_addr,
-
-        pending_wdata,
-
-        memory[10],
-
-        rdata,
-
-        ready
-
-    );
+            $time,
+            valid,
+            write,
+            addr,
+            wdata,
+            pending,
+            pending_write,
+            pending_addr,
+            pending_wdata,
+            memory[10],
+            rdata,
+            ready
+        );
+        
+        $strobe("@%0t DUT: valid=%0b write=%0b addr=%0d wdata=%h pending=%0b pending_write=%0b pending_addr=%0d pending_wdata=%h memory10=%h rdata=%h ready=%0b",
+            $time,
+            valid,
+            write,
+            addr,
+            wdata,
+            pending,
+            pending_write,
+            pending_addr,
+            pending_wdata,
+            memory[10],
+            rdata,
+            ready
+        );
 
         ready <= 0;
 
