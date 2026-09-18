@@ -14,7 +14,7 @@ The project was built as a self-directed effort to develop verification concepts
 - Regression automation
 - Simulation debugging and waveform analysis
 
-The DUT is intentionally implemented as a simplified, single-stage pipelined memory controller with **one-cycle request latency** rather than a full DDR PHY. The design supports **back-to-back request acceptance on consecutive clock cycles**. The focus of the project is on demonstrating a structured verification methodology, reusable UVM verification components, functional coverage, assertions, and transaction-level checking.
+The DUT is intentionally implemented as a simplified, 2-stage pipelined memory controller with a **2-cycle request latency** rather than a full DDR PHY. The design supports **back-to-back request acceptance on consecutive clock cycles**. The focus of the project is on demonstrating a structured verification methodology, reusable UVM verification components, functional coverage, assertions, and transaction-level checking.
 
 ## DUT
 
@@ -25,10 +25,10 @@ The memory controller provides a simple synchronous request interface supporting
 - 8-bit addresses
 - 32-bit data
 - 256 memory locations
-- One-cycle request processing latency
+- 2-cycle request processing latency
 - `valid` / `ready` handshaking
 
-A request is captured when `valid` is asserted and processed on the following clock cycle.
+A request is captured into a pending register one cycle after `valid` is asserted, then executed (read or write) and acknowledged via `ready` one cycle after that - a 2-cycle latency in total.
 
 ## Verification Architecture
 
@@ -80,7 +80,7 @@ The scoreboard maintains a reference model of the expected memory contents and c
 | Component | Purpose |
 |---|---|
 | Transaction | Represents memory read/write operations |
-| Sequence | Generates constrained-random traffic |
+| Sequence | Generates directed and constrained-random traffic |
 | Sequencer | Supplies transactions to the driver |
 | Driver | Converts transactions into DUT interface signals |
 | Monitor | Observes DUT activity |
@@ -157,7 +157,7 @@ The coverage model is intentionally focused on meaningful verification scenarios
 
 A SystemVerilog assertion module monitors the relationship between request activity and completion.
 
-The assertion checks that a captured request eventually results in the expected `ready` response according to the DUT's registered timing behavior.
+The assertion verifies that a captured request results in `ready` being asserted exactly 2 clock cycles later, matching the DUT's 2-stage pipeline latency.
 
 This provides an additional protocol-level check alongside the scoreboard.
 
