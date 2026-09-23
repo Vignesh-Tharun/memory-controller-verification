@@ -1,5 +1,13 @@
 # Memory Controller Verification with SystemVerilog and UVM
 
+## At a Glance
+
+- Full UVM environment (driver, monitor, scoreboard, sequencer, agent, env) for a self-designed, 2-stage pipelined memory controller
+- **100% functional coverage**, verified per-test — not just the merged total — to confirm each test earns its own coverage rather than relying on chance
+- **SVA-verified, fixed 2-cycle latency** (valid → ready), matching the DUT's pipeline depth exactly
+- Driver and monitor iteratively redesigned from single-transaction to fully pipelined (one request per cycle), specifically to enable back-to-back and read-after-write hazard testing
+- 4-test regression automated using Python — 0 `UVM_ERROR`, 0 `UVM_FATAL` recorded across all tests
+
 ## Overview
 
 This project implements a SystemVerilog/UVM-based verification environment for a simplified synchronous memory controller.
@@ -133,25 +141,25 @@ This test focuses on post-reset functionality rather than comprehensive reset be
 The verification environment includes functional coverage for:
 
 ### Operation
-
 - READ
 - WRITE
 
 ### Address
-
 - LOW: 0–63
 - MEDIUM: 64–191
 - HIGH: 192–255
 
-The final coverage run achieved:
+The covergroup samples only on cycles where a request is valid (`@(posedge clk iff valid)`), so idle cycles never inflate bin counts.
+
+The final regression run achieved:
 
 **100% functional coverage (5/5 bins)**
 
-```text
-covergroup : 100.0% (5/5)
-```
+Coverage was checked per test, not just the merged regression total. Operation coverage (READ/WRITE) is guaranteed by test structure regardless
+of random seed. Address-range coverage is not automatically guaranteed: the constrained-random test alone happened to reach all three ranges in
+one run, but only 1 of 10 random draws landed in the HIGH range — a different seed could plausibly miss it. The directed boundary test exists specifically to make address-range closure deterministic, independent of random seed.
 
-The coverage model is intentionally focused on meaningful verification scenarios rather than attempting to maximize simulator-generated code coverage from the entire UVM framework.
+The coverage model is intentionally focused on meaningful verification scenarios rather than maximizing simulator-generated code coverage from the entire UVM framework.
 
 ## Assertions
 
