@@ -20,7 +20,7 @@ class memory_scoreboard extends uvm_scoreboard;
 
     // uvm_analysis_imp calls this write function since it holds a reference to my scoreboard class
     function void write(memory_transaction tr);
-        // WRITE
+        // If it is a write transaction, print this
         if (tr.write) begin
             expected_memory[tr.addr] = tr.wdata;
 
@@ -35,7 +35,7 @@ class memory_scoreboard extends uvm_scoreboard;
             )
         end
 
-        // READ
+        // If it is a read transaction, print this
         else begin
             // We use === instead of == for exact 4 state comparison thus X/Z
             // should also be detected unlike == logical equality
@@ -51,6 +51,10 @@ class memory_scoreboard extends uvm_scoreboard;
                 )
             end
 
+            // Note: The RTL actually puts this data in pending_wdata register 
+            // so if the rtl has a bug where it reads from pending wdata 
+            // instead of the actual memory for a read transaction, we get the junk 
+            // "DEADBEEF" data
             else begin
                 `uvm_error(
                     "SCOREBOARD",
@@ -62,8 +66,6 @@ class memory_scoreboard extends uvm_scoreboard;
                     )
                 )
             end
-
         end
-
     endfunction
 endclass

@@ -7,8 +7,7 @@ module memory_coverage (
 
 // List of stuff to keep track of
 // Coverage group samples only for valid transactions
-// I don't want cycles where valid = 0 and garbage write/addr values
-// be counted in my coverage bins
+// I don't want cycles where valid = 0 and garbage write/addr values be counted in my coverage bins
 covergroup memory_cg @(posedge clk iff valid);
 
     // Keep track of a particular signal and what values it take
@@ -27,6 +26,20 @@ covergroup memory_cg @(posedge clk iff valid);
     }
 
 endgroup
+
+int write_count, read_count, low_count, med_count, high_count;
+
+always @(posedge clk iff valid) begin
+    if (write) write_count++; else read_count++;
+    if (addr <= 63) low_count++;
+    else if (addr <= 191) med_count++;
+    else high_count++;
+end
+
+final begin
+    $display("write=%0d read=%0d low=%0d med=%0d high=%0d",
+              write_count, read_count, low_count, med_count, high_count);
+end
 
 // Create instance of covergroup
 memory_cg cg = new();

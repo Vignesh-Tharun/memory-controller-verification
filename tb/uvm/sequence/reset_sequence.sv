@@ -1,3 +1,4 @@
+// Whether I am able to write and read after resetting the DUT
 class reset_sequence extends uvm_sequence #(memory_transaction);
 
     `uvm_object_utils(reset_sequence)

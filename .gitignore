@@ -13,3 +13,7 @@ coverage_report/
 # Temporary/editor files
 *.save
 EOF
+
+obj_*/
+logs/
+__pycache__/

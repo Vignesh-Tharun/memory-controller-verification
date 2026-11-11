@@ -8,6 +8,20 @@ class memory_monitor extends uvm_monitor;
 
     virtual memory_if vif;
 
+    // $ means unbounded queue whose size can grow and shrink dynamically
+    /*
+        A FIFO queue is used here because this DUT gives every request the
+        same fixed latency and has no reordering paths — so whichever
+        transaction has been waiting longest is guaranteed to be the one
+        that just completed.
+        A DUT with variable per-request latency (e.g. a cache hit finishing
+        before an earlier-issued miss) could complete requests out of issue
+        order, and would need an associative array keyed by a transaction ID
+        instead, so each completion is matched to the correct outstanding
+        request regardless of arrival order.
+    */
+    memory_transaction inflight_q[$]; 
+
     uvm_analysis_port #(memory_transaction) analysis_port;
 
     function new(string name = "memory_monitor",
@@ -26,19 +40,6 @@ class memory_monitor extends uvm_monitor;
     endfunction
 
     task run_phase(uvm_phase phase);
-        // $ means unbounded queue whose size can grow and shrink dynamically
-        /*
-            A FIFO queue is used here because this DUT gives every request the
-            same fixed latency and has no reordering paths — so whichever
-            transaction has been waiting longest is guaranteed to be the one
-            that just completed.
-            A DUT with variable per-request latency (e.g. a cache hit finishing
-            before an earlier-issued miss) could complete requests out of issue
-            order, and would need an associative array keyed by a transaction ID
-            instead, so each completion is matched to the correct outstanding
-            request regardless of arrival order.
-        */
-        memory_transaction inflight_q[$]; 
         memory_transaction tr;
         
         forever begin
@@ -56,11 +57,14 @@ class memory_monitor extends uvm_monitor;
 
             // If new request showed up THIS cycle
             if (vif.monitor_cb.valid) begin
+                // Recreate the transaction
                 tr = memory_transaction::type_id::create("tr");
                 tr.write = vif.monitor_cb.write;
                 tr.addr  = vif.monitor_cb.addr;
                 if (vif.monitor_cb.write)
                     tr.wdata = vif.monitor_cb.wdata;
+
+                // Push transaction into inflight queue
                 inflight_q.push_back(tr);
             end
 
@@ -137,4 +141,12 @@ class memory_monitor extends uvm_monitor;
         //     end
         // end
     endtask
+
+    function void check_phase(uvm_phase phase);
+        super.check_phase(phase);
+        
+        // Check if there are still pending transactions especially when reset is asserted in the midst of simulation
+        if (inflight_q.size() != 0)
+            `uvm_error("MONITOR", $sformatf("%0d transaction(s) still in flight at end of test", inflight_q.size()))
+    endfunction
 endclass

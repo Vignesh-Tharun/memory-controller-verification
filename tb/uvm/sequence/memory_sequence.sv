@@ -40,6 +40,9 @@ class memory_sequence extends uvm_sequence #(memory_transaction);
                 // 10 write transactions. This is happening because
                 // wdata is being randomized even for READ transactions
                 // causing garbage values for wdata in those READ transactions
+                // Note: The RTL actually puts this data in pending_wdata register 
+                // so if the rtl has a bug where it reads from pending wdata 
+                // instead of memory, we get this junk "DEADBEEF" data
                 wdata == 32'hDEADBEEF; 
             }) == 0)    
                 `uvm_fatal("RANDFAIL", "Read transaction randomization failed")

@@ -24,6 +24,8 @@ failed = []
 for test in tests:
     print(f"\nRunning {test}...")
 
+    # capture_output allows it to be stored in a Python variable
+    # text=True is to store it as a Python string
     result = subprocess.run(
         [executable, f"+UVM_TESTNAME={test}"],
         capture_output=True,

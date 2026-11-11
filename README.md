@@ -3,7 +3,7 @@
 ## At a Glance
 
 - Full UVM environment (driver, monitor, scoreboard, sequencer, agent, env) for a self-designed, 2-stage pipelined memory controller
-- **100% functional coverage**, verified per-test — not just the merged total — to confirm each test earns its own coverage rather than relying on chance
+- **100% functional coverage**, checked per test: the random test reached every bin by chance (only 1 of 10 draws hit the HIGH range), so a directed boundary test makes address closure deterministic.
 - **SVA-verified, fixed 2-cycle latency** (valid → ready), matching the DUT's pipeline depth exactly
 - Driver and monitor iteratively redesigned from single-transaction to fully pipelined (one request per cycle), specifically to enable back-to-back and read-after-write hazard testing
 - 4-test regression automated using Python — 0 `UVM_ERROR`, 0 `UVM_FATAL` recorded across all tests
@@ -163,11 +163,15 @@ The coverage model is intentionally focused on meaningful verification scenarios
 
 ## Assertions
 
-A SystemVerilog assertion module monitors the relationship between request activity and completion.
+A SystemVerilog assertion module checks request/response timing:
 
-The assertion verifies that a captured request results in `ready` being asserted exactly 2 clock cycles later, matching the DUT's 2-stage pipeline latency.
+- **Forward check:** every `valid` is followed by `ready` exactly 2 cycles later, matching the 2-stage pipeline.
+- **Reverse check:** every `ready` is preceded by a `valid` 2 cycles earlier (no response without a request).
+- **Cover property:** confirms the forward scenario actually occurs, so the check cannot pass vacuously.
+- **X/Z check** on `valid`/`ready` (meaningful on 4-state simulators; Verilator is 2-state).
+- **Timing validation:** Temporarily changed the forward assertion delay from `##2` to `##3` and confirmed that the assertion fails, verifying that the timing check detects an incorrect response latency.
 
-This provides an additional protocol-level check alongside the scoreboard.
+The scoreboard checks data and the assertions check timing, so each catches bugs the other cannot. The monitor also checks at the end of each test that no requests are still in flight.
 
 ## Regression
 
@@ -254,3 +258,19 @@ This project demonstrates practical experience with:
 - Simulation failure analysis
 
 The verification environment is designed to reflect the structured methodology used when verifying larger digital IP blocks, while keeping the DUT small enough to understand and debug independently.
+
+## How to Run
+
+Run everything from the project root.
+
+```bash
+rm -rf obj_dir
+verilator --binary --language 1800-2017 --top-module tb_top \
+--timing --build-jobs 4 --coverage --trace-vcd \
+-Wno-TIMESCALEMOD -Iuvm-core/src +define+UVM_NO_DPI \
+uvm-core/src/uvm_pkg.sv rtl/memory_controller.sv \
+coverage/memory_coverage.sv tb/tb_top.sv
+
+python tb/uvm/scripts/regression.py                  # all four tests
+./obj_dir/Vtb_top +UVM_TESTNAME=boundary_test        # one test
+```
